@@ -1,11 +1,12 @@
 import express from "express";
+import mongoose from "mongoose";
 import morgan from "morgan";
 import cors from "cors";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
 dotenv.config();
 import uvroute from "./routes/uv.route.js";
-import retrieveUV from "./controllers/uv.controller.js";
+import authroute from "./routes/auth.route.js";
 
 // define app
 const app = express();
@@ -25,9 +26,20 @@ app.get("/", (req, res) => {
 app.use("/api/uv", uvroute);
 // app.get("/uvindex", retrieveUV);
 
+// auth routes
+app.use("/api/auth", authroute);
+
 // listen app
-app.listen(process.env.PORT || 5001, () => {
-    process.env.PORT
-        ? console.log(`App listening on port ${process.env.PORT}`)
-        : console.log("App listening on port 5001");
-});
+mongoose
+    .connect(process.env.MONGO_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    })
+    .then(() => {
+        console.log("Database connected");
+        app.listen(process.env.PORT || 5001, () => {
+            process.env.PORT
+                ? console.log(`App listening on port ${process.env.PORT}`)
+                : console.log("App listening on port 5001");
+        });
+    });
