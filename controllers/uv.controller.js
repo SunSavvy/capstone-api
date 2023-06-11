@@ -1,14 +1,9 @@
 import axios from "axios";
 import csv from "csv-parser";
 import { Storage } from "@google-cloud/storage";
-// import tf from "@tensorflow/tfjs-node";
-// import { loadGraphModel } from "@tensorflow/tfjs-node";
+import "@tensorflow/tfjs-node";
 
 export const RetrieveUV = async (req, res) => {
-    // ini kalo pake query parameter (di url masukkin latitue sama longitude)
-    // const { latitute, longitude } = req.query;
-
-    // in kalao pake query dari request body (misal manggil apinya dari form di aplikasi androidnya (semacam form login buat manggil api dan ngirim data latitute dan longitude))
     const { latitute, longitude } = req.body;
     try {
         await axios
@@ -74,6 +69,42 @@ export const Classify = async (req, res) => {
                     data: results,
                 });
                 console.log(results);
+            });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const Forecast = async (req, res) => {
+    try {
+        // get the location name with its lat and long
+        const { location, latitute, longitude } = req.body;
+        // console.log(latitute, longitude);
+
+        axios
+            .get(
+                `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${latitute}&longitude=${longitude}&hourly=uv_index&past_days=1`
+            )
+            .then((response) => {
+                const uvIndexes = response.data.hourly.uv_index.slice(0, 24);
+                axios
+                    .post(`${process.env.FLASK_API}/predict`, {
+                        city: location,
+                        prevUv: uvIndexes,
+                    })
+                    .then((response) => {
+                        // console.log(response.data.predictions);
+                        res.status(200).json({
+                            message: "success",
+                            data: {
+                                predictions: response.data.predictions,
+                            },
+                        });
+                    })
+                    .catch((error) => {
+                        console.log(error.message);
+                        res.status(500).json({ message: error });
+                    });
             });
     } catch (error) {
         res.status(500).json({ message: error.message });

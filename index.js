@@ -37,9 +37,9 @@ mongoose
     })
     .then(() => {
         console.log("Database connected");
-        app.listen(process.env.PORT || 5001, () => {
+        app.listen(process.env.PORT || 80, () => {
             process.env.PORT
                 ? console.log(`App listening on port ${process.env.PORT}`)
-                : console.log("App listening on port 5001");
+                : console.log("App listening on default http port 80");
         });
     });
