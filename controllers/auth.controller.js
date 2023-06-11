@@ -1,5 +1,6 @@
 import User from "../models/user.js";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 // functio buat regis akun baru
 export const Register = async (req, res) => {
@@ -18,9 +19,15 @@ export const Register = async (req, res) => {
                 });
                 // simpan ke database
                 await userData.save().then(() => {
+                    const token = jwt.sign(
+                        { userId: userData._id },
+                        process.env.SECRET_KEY,
+                        { expiresIn: "2d" }
+                    );
                     res.status(201).json({
                         message: "User saved successfully",
                         data: userData,
+                        token: token,
                     });
                 });
             }
@@ -61,7 +68,7 @@ export const Preference = async (req, res) => {
                     returnOriginal: false,
                 }
             )
-                .then(async () => {
+                .then(async (response) => {
                     res.status(200).json({
                         message: "Update was successful",
                         data: await User.findOne({
@@ -89,9 +96,15 @@ export const Login = async (req, res) => {
             });
             if (userFromDb) {
                 if (await bcrypt.compare(password, userFromDb.password)) {
+                    const token = jwt.sign(
+                        { userId: userFromDb._id },
+                        process.env.SECRET_KEY,
+                        { expiresIn: "2d" }
+                    );
                     res.status(200).json({
                         message: "Welcome to SunSavvy",
                         data: userFromDb,
+                        token: token,
                     });
                 } else {
                     res.status(404).json({
